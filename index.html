@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Elite Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Settings & Counting HUD -->
+        <aside class="sidebar">
+            <header>
+                <h1>Elite<span>Blackjack</span></h1>
+                <p>Advanced Strategy Engine</p>
+            </header>
+
+            <section class="counting-hud card">
+                <div class="hud-item">
+                    <span class="label">Running Count</span>
+                    <span id="running-count" class="value">0</span>
+                </div>
+                <div class="hud-item highlight">
+                    <span class="label">True Count</span>
+                    <span id="true-count" class="value">0.00</span>
+                </div>
+                <!-- Table Tracking Indicator -->
+                <div id="table-mode-indicator" class="table-mode-card">
+                    <span class="label">Input Mode</span>
+                    <button id="toggle-table-mode" class="mode-toggle">HAND</button>
+                </div>
+                <div class="hud-item">
+                    <span class="label">Decks Remaining</span>
+                    <span id="decks-remaining" class="value">8.0</span>
+                </div>
+            </section>
+
+            <section class="settings card">
+                <div class="stats-header">
+                    <h3>Session Stats</h3>
+                    <button id="reset-stats" class="text-btn">Reset</button>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-label">WIN</span>
+                        <span id="stat-win" class="stat-val">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">LOSS</span>
+                        <span id="stat-loss" class="stat-val">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">PUSH</span>
+                        <span id="stat-push" class="stat-val">0</span>
+                    </div>
+                </div>
+                <div class="win-rate">
+                    <span>Win Rate: </span><span id="win-rate-val">0%</span>
+                </div>
+            </section>
+
+            <section class="settings card">
+                <h3>Table Rules</h3>
+                <div class="setting-row">
+                    <label for="deck-count">Number of Decks</label>
+                    <select id="deck-count">
+                        <option value="1">1 Deck</option>
+                        <option value="2">2 Decks</option>
+                        <option value="4">4 Decks</option>
+                        <option value="6">6 Decks</option>
+                        <option value="8" selected>8 Decks</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Dealer Soft 17</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" id="s17-stand">Stand</button>
+                        <button class="toggle-btn" id="s17-hit">Hit</button>
+                    </div>
+                </div>
+                <button id="reset-shoe" class="secondary-btn">Reset Shoe</button>
+            </section>
+        </aside>
+
+        <!-- Main Content: Game Interface & Strategy -->
+        <main class="main-content">
+            <section class="strategy-advice card">
+                <div class="advice-header">Optimal Move</div>
+                <div id="advice-output" class="advice-value pulse">WAITING</div>
+                <div id="advice-details" class="advice-sub">Input Deal and Player Cards</div>
+            </section>
+
+            <div class="game-area">
+                <div class="dealer-hand">
+                    <span class="area-label">Dealer Hand <span id="dealer-total" class="total-badge"></span></span>
+                    <div id="dealer-card-input" class="card-slots">
+                        <div class="slot empty active" data-type="dealer" data-index="0">+</div>
+                        <div class="slot empty" data-type="dealer" data-index="1">+</div>
+                        <div class="slot empty" data-type="dealer" data-index="2">+</div>
+                        <div class="slot empty" data-type="dealer" data-index="3">+</div>
+                        <div class="slot empty" data-type="dealer" data-index="4">+</div>
+                    </div>
+                </div>
+
+                <div class="player-area">
+                    <div id="hand-1" class="hand active">
+                        <span class="area-label">Hand 1 <span id="player-total-0" class="total-badge"></span></span>
+                        <div id="player-card-input-0" class="card-slots player-slots">
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="0">+</div>
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="1">+</div>
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="2">+</div>
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="3">+</div>
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="4">+</div>
+                            <div class="slot empty" data-type="player" data-hand="0" data-index="5">+</div>
+                        </div>
+                    </div>
+                    
+                    <div id="hand-2" class="hand hidden">
+                        <span class="area-label">Hand 2 <span id="player-total-1" class="total-badge"></span></span>
+                        <div id="player-card-input-1" class="card-slots player-slots">
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="0">+</div>
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="1">+</div>
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="2">+</div>
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="3">+</div>
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="4">+</div>
+                            <div class="slot empty" data-type="player" data-hand="1" data-index="5">+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Tracking Feed -->
+            <div class="table-tracking-area">
+                <span class="area-label">Table Feed (Other Players / Discards)</span>
+                <div id="table-history-feed" class="history-grid"></div>
+            </div>
+
+            <!-- Card Selector Keyboard -->
+            <section class="card-keyboard card">
+                <div class="suit-row">
+                    <!-- Numbers -->
+                    <button class="key" data-val="2">2</button>
+                    <button class="key" data-val="3">3</button>
+                    <button class="key" data-val="4">4</button>
+                    <button class="key" data-val="5">5</button>
+                    <button class="key" data-val="6">6</button>
+                    <button class="key" data-val="7">7</button>
+                    <button class="key" data-val="8">8</button>
+                    <button class="key" data-val="9">9</button>
+                    <button class="key" data-val="10">10</button>
+                    <button class="key accent" data-val="J">J</button>
+                    <button class="key accent" data-val="Q">Q</button>
+                    <button class="key accent" data-val="K">K</button>
+                    <button class="key primary" data-val="A">A</button>
+                </div>
+            </section>
+            
+            <section class="outcomes card">
+                <span class="area-label">Round Outcome</span>
+                <div class="outcome-btns">
+                    <button id="outcome-win" class="outcome-btn win">WIN</button>
+                    <button id="outcome-push" class="outcome-btn push">PUSH</button>
+                    <button id="outcome-loss" class="outcome-btn loss">LOSS</button>
+                </div>
+            </section>
+            
+            <section class="actions">
+                <button id="split-btn" class="special-btn hidden">SPLIT HAND</button>
+                <button id="clear-hand" class="danger-btn">Clear Hand</button>
+                <button id="undo-btn" class="secondary-btn" style="flex:1">Undo Card</button>
+                <button id="new-round" class="primary-btn">New Round</button>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hidden Card Template -->
+    <template id="card-template">
+        <div class="v-card fade-in">
+            <span class="rank"></span>
+        </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>

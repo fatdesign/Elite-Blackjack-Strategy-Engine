@@ -1,0 +1,494 @@
+:root {
+    --bg-color: #0c0c0e;
+    --sidebar-bg: #141417;
+    --card-bg: rgba(30, 30, 35, 0.7);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --accent-gold: #d4af37;
+    --accent-gold-rgb: 212, 175, 55;
+    --accent-primary: #5d5dff;
+    --accent-success: #00ff88;
+    --accent-danger: #ff4d4d;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a5;
+    --glass-blur: blur(12px);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 320px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+header h1 span {
+    color: var(--accent-gold);
+}
+
+header p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.counting-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.hud-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hud-item .label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.hud-item .value {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.hud-item.highlight .value {
+    color: var(--accent-gold);
+    font-size: 1.75rem;
+}
+
+/* Stats Styling */
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.stat-box {
+    flex: 1;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.stats-header h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.text-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent-gold);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.text-btn:hover {
+    text-decoration: underline;
+}
+
+.setting-row {
+    margin-bottom: 1rem;
+}
+
+.setting-row label {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+select {
+    width: 100%;
+    background: #25252b;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    outline: none;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+    background: #25252b;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.toggle-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: transparent;
+}
+
+/* Main Content Styling */
+.main-content {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+}
+
+.strategy-advice {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    border: 2px solid var(--border-color);
+}
+
+.strategy-advice .advice-header {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.strategy-advice .advice-value {
+    font-size: 4rem;
+    font-weight: 800;
+    margin: 1rem 0;
+}
+
+.strategy-advice .advice-sub {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Game Area Cards */
+.game-area {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    width: 100%;
+    max-width: 800px;
+}
+
+.area-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.total-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    border: 1px solid var(--border-color);
+}
+
+.total-badge.bust {
+    color: var(--accent-danger);
+    border-color: var(--accent-danger);
+    background: rgba(255, 77, 77, 0.1);
+}
+
+.player-area {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.hand {
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.hand.active {
+    background: rgba(var(--accent-gold-rgb), 0.05);
+    border-color: rgba(var(--accent-gold-rgb), 0.3);
+    box-shadow: 0 0 15px rgba(var(--accent-gold-rgb), 0.1);
+}
+
+.hand.hidden {
+    display: none;
+}
+
+.card-slots {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.slot {
+    width: 52px;
+    height: 72px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slot.dealer-upcard {
+    border: 2px solid var(--accent-gold);
+}
+
+.slot:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-secondary);
+}
+
+.slot.active {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+/* Custom Card Style */
+.v-card {
+    width: 52px;
+    height: 72px;
+    background: white;
+    color: black;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    position: relative;
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+/* Card Keyboard */
+.card-keyboard {
+    width: 100%;
+    max-width: 800px;
+    padding: 1rem;
+}
+
+.suit-row {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 0.5rem;
+}
+
+.key {
+    background: #1e1e23;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 12px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.key:hover {
+    transform: translateY(-2px);
+    background: #2a2a30;
+}
+
+.key.primary { background: #3a3a45; }
+.key.accent { background: #25252b; color: var(--accent-gold); }
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+button.special-btn {
+    flex: 1.5;
+    background: var(--accent-gold);
+    color: black;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 15px rgba(var(--accent-gold-rgb), 0.3);
+}
+
+button.special-btn.hidden {
+    display: none;
+}
+
+button.primary-btn {
+    flex: 2;
+    background: var(--accent-primary);
+    border: none;
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+button.secondary-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* Outcome Buttons */
+.outcomes {
+    width: 100%;
+    max-width: 600px;
+}
+
+.outcome-btns {
+    display: flex;
+    gap: 1rem;
+    margin-top: 10px;
+}
+
+.outcome-btn {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.win:hover, .win.active { background: var(--accent-success); border-color: transparent; color: black; }
+.push:hover, .push.active { background: var(--accent-gold); border-color: transparent; color: black; }
+.loss:hover, .loss.active { background: var(--accent-danger); border-color: transparent; color: black; }
+
+.win { color: var(--accent-success); border-color: var(--accent-success); }
+.push { color: var(--accent-gold); border-color: var(--accent-gold); }
+.loss { color: var(--accent-danger); border-color: var(--accent-danger); }
+
+/* Table Tracking Mode */
+.table-mode-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 12px;
+    margin: 5px 0;
+}
+
+.mode-toggle {
+    background: #25252b;
+    border: 1px solid var(--accent-gold);
+    color: var(--accent-gold);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-toggle.table-active {
+    background: var(--accent-gold);
+    color: black;
+}
+
+.table-tracking-area {
+    width: 100%;
+    max-width: 800px;
+    background: rgba(20, 20, 25, 0.5);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.history-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 40px;
+}
+
+.mini-card {
+    background: #eee;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    animation: fade-in 0.3s;
+}
