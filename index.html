@@ -136,41 +136,40 @@
                 <div id="table-history-feed" class="history-grid"></div>
             </div>
 
-            <!-- Card Selector Keyboard -->
-            <section class="card-keyboard card">
-                <div class="suit-row">
-                    <!-- Numbers -->
-                    <button class="key" data-val="2">2</button>
-                    <button class="key" data-val="3">3</button>
-                    <button class="key" data-val="4">4</button>
-                    <button class="key" data-val="5">5</button>
-                    <button class="key" data-val="6">6</button>
-                    <button class="key" data-val="7">7</button>
-                    <button class="key" data-val="8">8</button>
-                    <button class="key" data-val="9">9</button>
-                    <button class="key" data-val="10">10</button>
-                    <button class="key accent" data-val="J">J</button>
-                    <button class="key accent" data-val="Q">Q</button>
-                    <button class="key accent" data-val="K">K</button>
-                    <button class="key primary" data-val="A">A</button>
+            <!-- Streamlined Control Area -->
+            <div class="compact-footer card">
+                <div class="row">
+                    <div class="key-grid">
+                        <button class="key" data-val="2">2</button>
+                        <button class="key" data-val="3">3</button>
+                        <button class="key" data-val="4">4</button>
+                        <button class="key" data-val="5">5</button>
+                        <button class="key" data-val="6">6</button>
+                        <button class="key" data-val="7">7</button>
+                        <button class="key" data-val="8">8</button>
+                        <button class="key" data-val="9">9</button>
+                        <button class="key" data-val="10">10</button>
+                        <button class="key accent" data-val="J">J</button>
+                        <button class="key accent" data-val="Q">Q</button>
+                        <button class="key accent" data-val="K">K</button>
+                        <button class="key primary" data-val="A">A</button>
+                    </div>
                 </div>
-            </section>
-            
-            <section class="outcomes card">
-                <span class="area-label">Round Outcome</span>
-                <div class="outcome-btns">
-                    <button id="outcome-win" class="outcome-btn win">WIN</button>
-                    <button id="outcome-push" class="outcome-btn push">PUSH</button>
-                    <button id="outcome-loss" class="outcome-btn loss">LOSS</button>
+                
+                <div class="row controls-row">
+                    <div class="outcome-group">
+                        <button id="outcome-win" class="outcome-btn win">WIN</button>
+                        <button id="outcome-push" class="outcome-btn push">PUSH</button>
+                        <button id="outcome-loss" class="outcome-btn loss">LOSS</button>
+                    </div>
+                    <div class="utility-group">
+                        <button id="undo-btn" class="secondary-btn">Undo</button>
+                        <button id="clear-hand" class="secondary-btn">Clear</button>
+                        <button id="split-btn" class="special-btn hidden">SPLIT</button>
+                        <button id="new-round" class="primary-btn">NEW ROUND</button>
+                    </div>
                 </div>
-            </section>
-            
-            <section class="actions">
-                <button id="split-btn" class="special-btn hidden">SPLIT HAND</button>
-                <button id="clear-hand" class="danger-btn">Clear Hand</button>
-                <button id="undo-btn" class="secondary-btn" style="flex:1">Undo Card</button>
-                <button id="new-round" class="primary-btn">New Round</button>
-            </section>
+            </div>
         </main>
     </div>
 
