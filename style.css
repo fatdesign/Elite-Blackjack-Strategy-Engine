@@ -112,6 +112,42 @@ header p {
     border: 1px solid var(--border-color);
 }
 
+/* Input Mode Toggle - Special Gold Glow */
+.table-mode-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(var(--accent-gold-rgb), 0.2);
+}
+
+.mode-toggle {
+    background: var(--accent-gold);
+    color: #000;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(var(--accent-gold-rgb), 0.4);
+    transition: all 0.3s;
+    text-shadow: none;
+}
+
+.mode-toggle:hover {
+    box-shadow: 0 0 25px rgba(var(--accent-gold-rgb), 0.6);
+    transform: scale(1.05);
+}
+
+.mode-toggle.table-active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 0 15px rgba(93, 93, 255, 0.4);
+}
+
 .stat-label {
     display: block;
     font-size: 0.65rem;
