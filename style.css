@@ -521,23 +521,6 @@ button {
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-.bot-hit-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.bot-hit-controls input {
-    width: 45px;
-    background: #25252b;
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    outline: none;
-}
-
 /* Anomaly Tracker Styling refinements */
 .anomaly-item.user-dev {
     border-left-color: var(--accent-primary);

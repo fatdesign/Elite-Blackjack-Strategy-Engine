@@ -14,7 +14,6 @@ const state = {
     stats: { win: 0, loss: 0, push: 0 },
     splitActive: false,
     anomalies: [],
-    botHitTracking: { active: false, total: 17 },
     unitSize: 10,
     bankroll: 1000
 };
@@ -131,20 +130,6 @@ function setupEventListeners() {
     document.getElementById('reset-anomalies').addEventListener('click', resetAnomalies);
     elements.splitBtn.addEventListener('click', executeSplit);
     
-    document.getElementById('btn-track-bot-hit').addEventListener('click', () => {
-        state.botHitTracking.active = !state.botHitTracking.active;
-        state.botHitTracking.total = 20; // Default high total for 'Ghost' hits
-        setTableMode(true);
-        const btn = document.getElementById('btn-track-bot-hit');
-        if (state.botHitTracking.active) {
-            btn.textContent = "WAITING FOR BOT CARD...";
-            btn.style.background = "var(--accent-danger)";
-        } else {
-            btn.textContent = "TRACK BOT CARD";
-            btn.style.background = "";
-        }
-    });
-
     elements.outcomeWin.addEventListener('click', () => recordOutcome('win'));
     elements.outcomeLoss.addEventListener('click', () => recordOutcome('loss'));
     elements.outcomePush.addEventListener('click', () => recordOutcome('push'));
@@ -274,15 +259,6 @@ function addTableCard(val) {
     state.runningCount += COUNT_VALUES[val];
     state.totalCardsDealt++;
     state.tableHistory.push(val);
-    
-    // Check for Bot Anomaly if tracking is active
-    if (state.botHitTracking.active) {
-        const dealerUp = state.dealerHand[0];
-        if (dealerUp) {
-            checkAnomaly(val, state.botHitTracking.total, dealerUp, false);
-        }
-        state.botHitTracking.active = false; // Reset after one hit
-    }
     
     refreshUI();
 }
@@ -651,12 +627,6 @@ function refreshAnomalies() {
         `;
         elements.anomalyList.appendChild(div);
     });
-
-    const btn = document.getElementById('btn-track-bot-hit');
-    if (!state.botHitTracking.active) {
-        btn.textContent = "TRACK BOT CARD";
-        btn.style.background = "";
-    }
 }
 
 function clearTable() {
