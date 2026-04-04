@@ -102,6 +102,8 @@ const elements = {
     edgeVal: document.getElementById('edge-val'),
     aceDensity: document.getElementById('ace-density'),
     rorVal: document.getElementById('ror-val'),
+    penetrationStatus: document.getElementById('penetration-status'),
+    minBankrollVal: document.getElementById('min-bankroll-val'),
     bankrollInput: document.getElementById('bankroll-input'),
     unitSizeInput: document.getElementById('unit-size-input'),
     modeKelly12: document.getElementById('mode-kelly-1-2'),
@@ -429,6 +431,22 @@ function updateHUD() {
     // Update Penetration UI
     if (elements.penetrationVal) elements.penetrationVal.textContent = `${penetration.toFixed(1)}%`;
     if (elements.penetrationBar) elements.penetrationBar.style.width = `${Math.min(100, penetration)}%`;
+    
+    if (elements.penetrationStatus) {
+        if (penetration < 50) {
+            elements.penetrationStatus.textContent = "LOW RELIABILITY";
+            elements.penetrationStatus.style.background = "rgba(255, 77, 77, 0.15)";
+            elements.penetrationStatus.style.color = "var(--accent-danger)";
+        } else if (penetration < 75) {
+            elements.penetrationStatus.textContent = "STABLE";
+            elements.penetrationStatus.style.background = "rgba(255, 170, 0, 0.15)";
+            elements.penetrationStatus.style.color = "var(--risk-med)";
+        } else {
+            elements.penetrationStatus.textContent = "MASTER LEVEL";
+            elements.penetrationStatus.style.background = "rgba(0, 255, 136, 0.15)";
+            elements.penetrationStatus.style.color = "var(--accent-success)";
+        }
+    }
 
     elements.trueCount.style.color = tc >= 2 ? 'var(--accent-success)' : tc <= -2 ? 'var(--accent-danger)' : 'var(--accent-gold)';
     
@@ -484,6 +502,14 @@ function updateBettingAdvice(tc, aceDiff) {
             elements.rorVal.textContent = `${rorPercent}%`;
             elements.rorVal.style.color = rorPercent < 1 ? "var(--risk-low)" : rorPercent < 5 ? "var(--risk-med)" : "var(--risk-high)";
         }
+    }
+    
+    // Suggested Bankroll for 5% RoR
+    if (elements.minBankrollVal) {
+        const positiveEdge = Math.max(0.01, edge) / 100;
+        const suggested = Math.ceil(-Math.log(0.05) * (1.15 * Math.pow(state.unitSize, 2)) / (2 * positiveEdge));
+        elements.minBankrollVal.textContent = `€${suggested.toLocaleString()}`;
+        elements.minBankrollVal.style.color = state.bankroll >= suggested ? "var(--accent-success)" : "var(--risk-med)";
     }
 }
 

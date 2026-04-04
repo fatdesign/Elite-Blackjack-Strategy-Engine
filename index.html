@@ -44,6 +44,9 @@
                 <div class="penetration-container">
                     <div class="label-row">
                         <span class="label">Penetration</span>
+                        <span id="penetration-status" class="bet-badge" style="background: rgba(255, 77, 77, 0.15); color: var(--accent-danger); font-size: 0.6rem;">LOW RELIABILITY</span>
+                    </div>
+                    <div class="label-row" style="margin-bottom: 2px;">
                         <span id="penetration-val" class="value-small">0%</span>
                     </div>
                     <div class="progress-bg">
@@ -71,6 +74,9 @@
                     <div class="bet-row">
                         <span class="label">Risk of Ruin</span>
                         <span id="ror-val" class="value-small">0.0%</span>
+                    </div>
+                    <div id="bankroll-advice" class="advice-sub" style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
+                        Min. Bankroll for 5% RoR: <span id="min-bankroll-val">€5,000</span>
                     </div>
                 </div>
             </section>
