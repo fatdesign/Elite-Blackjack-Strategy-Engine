@@ -8,6 +8,8 @@
     --accent-primary: #5d5dff;
     --accent-success: #00ff88;
     --accent-danger: #ff4d4d;
+    --accent-surrender: #bf94ff;
+    --accent-insurance: #00d4ff;
     --text-primary: #ffffff;
     --text-secondary: #a0a0a5;
     --glass-blur: blur(12px);
@@ -447,14 +449,128 @@ button {
 .stand { color: var(--accent-danger); }
 .double { color: var(--accent-primary); }
 .split { color: var(--accent-gold); }
+.surrender { color: var(--accent-surrender); text-shadow: 0 0 15px rgba(191, 148, 255, 0.4); }
+.insurance { color: var(--accent-insurance); text-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+
+/* Penetration Bar */
+.penetration-container {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.value-small {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.progress-bg {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-success));
+    transition: width 0.5s ease;
+}
+
+/* Betting Card */
+.betting-card {
+    border-color: rgba(var(--accent-gold-rgb), 0.3) !important;
+}
+
+.bet-badge {
+    background: rgba(var(--accent-gold-rgb), 0.2);
+    color: var(--accent-gold);
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.bet-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.value-gold {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+}
 
 .pulse { animation: pulse 2.5s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* Anomaly Tracker Styling */
+.bot-hit-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.bot-hit-controls input {
+    width: 45px;
+    background: #25252b;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    outline: none;
+}
+
+/* Anomaly Tracker Styling refinements */
+.anomaly-item.user-dev {
+    border-left-color: var(--accent-primary);
+    background: rgba(93, 93, 255, 0.05);
+}
+
+.user-dev .anom-tag {
+    color: var(--accent-primary);
+}
+
+.anomaly-item.bot-hit {
+    border-left-color: var(--accent-danger);
+    background: rgba(255, 77, 77, 0.05);
+}
+
+.bot-hit .anom-tag {
+    color: var(--accent-danger);
+}
+
 .anom-card {
     border-color: rgba(255, 77, 77, 0.2) !important;
+}
+
+.anom-card .stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .anom-badge {

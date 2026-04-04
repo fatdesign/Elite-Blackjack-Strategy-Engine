@@ -13,7 +13,10 @@ const state = {
     history: [],
     stats: { win: 0, loss: 0, push: 0 },
     splitActive: false,
-    anomalies: [] // New: {type: 'suspicious_hit', card: '10', total: 18, dealerUp: '5', timestamp: Date.now()}
+    anomalies: [],
+    botHitTracking: { active: false, total: 17 },
+    unitSize: 10,
+    bankroll: 1000
 };
 
 const COUNT_VALUES = {
@@ -91,8 +94,12 @@ const elements = {
     playerTotal1: document.getElementById('player-total-1'),
     hand1: document.getElementById('hand-1'),
     hand2: document.getElementById('hand-2'),
-    anomalyList: document.getElementById('anomaly-list'),
-    anomalyCountBadge: document.getElementById('anomaly-count')
+    anomalyCountBadge: document.getElementById('anomaly-count'),
+    penetrationVal: document.getElementById('penetration-val'),
+    penetrationBar: document.getElementById('penetration-bar'),
+    betMultiplier: document.getElementById('bet-multiplier'),
+    recBetVal: document.getElementById('rec-bet-val'),
+    edgeVal: document.getElementById('edge-val')
 };
 
 function init() {
@@ -121,7 +128,22 @@ function setupEventListeners() {
     elements.undoBtn.addEventListener('click', undoLastAction);
     elements.resetShoeBtn.addEventListener('click', resetShoe);
     elements.resetStatsBtn.addEventListener('click', resetStats);
+    document.getElementById('reset-anomalies').addEventListener('click', resetAnomalies);
     elements.splitBtn.addEventListener('click', executeSplit);
+    
+    document.getElementById('btn-track-bot-hit').addEventListener('click', () => {
+        state.botHitTracking.active = !state.botHitTracking.active;
+        state.botHitTracking.total = 20; // Default high total for 'Ghost' hits
+        setTableMode(true);
+        const btn = document.getElementById('btn-track-bot-hit');
+        if (state.botHitTracking.active) {
+            btn.textContent = "WAITING FOR BOT CARD...";
+            btn.style.background = "var(--accent-danger)";
+        } else {
+            btn.textContent = "TRACK BOT CARD";
+            btn.style.background = "";
+        }
+    });
 
     elements.outcomeWin.addEventListener('click', () => recordOutcome('win'));
     elements.outcomeLoss.addEventListener('click', () => recordOutcome('loss'));
@@ -235,7 +257,7 @@ function addCard(val) {
         // Check for suspicious hit (if hit and was already at 17+ or similar)
         if (state.activeSlot.index > 1) { // It's a Hit, not initial 2 cards
              const dealerUp = state.dealerHand[0];
-             if (dealerUp) checkAnomaly(val, handBefore, dealerUp);
+             if (dealerUp) checkAnomaly(val, handBefore, dealerUp, true);
         }
     }
     
@@ -245,10 +267,6 @@ function addCard(val) {
 }
 
 function addTableCard(val) {
-    // Check for anomaly before adding
-    // Simplification: In 'Table Mode', we can't always know the total, 
-    // unless we assume the card is hit by a bot.
-    // Let's add a heuristic: if we see a Hit during a high count, it's worth noting.
     state.history.push({
         val, type: 'table', index: state.tableHistory.length,
         prevRunningCount: state.runningCount, prevTotalDealt: state.totalCardsDealt
@@ -257,14 +275,19 @@ function addTableCard(val) {
     state.totalCardsDealt++;
     state.tableHistory.push(val);
     
-    // Anomaly heuristic for Table Feed: if card is 10/Face and running count was extremely high, 
-    // maybe note it if it's a suspicious 'eating' pattern? 
-    // For now, only focus on verified Hand inputs or user-marked cards.
+    // Check for Bot Anomaly if tracking is active
+    if (state.botHitTracking.active) {
+        const dealerUp = state.dealerHand[0];
+        if (dealerUp) {
+            checkAnomaly(val, state.botHitTracking.total, dealerUp, false);
+        }
+        state.botHitTracking.active = false; // Reset after one hit
+    }
     
     refreshUI();
 }
 
-function checkAnomaly(val, handTotalBeforeHit, dealerUp) {
+function checkAnomaly(val, handTotalBeforeHit, dealerUp, isUserHand = false) {
     const dVal = getCardValue(dealerUp);
     const isSuspicious = (handTotalBeforeHit >= 17) || (handTotalBeforeHit >= 12 && dVal <= 6);
     
@@ -275,7 +298,8 @@ function checkAnomaly(val, handTotalBeforeHit, dealerUp) {
             total: handTotalBeforeHit,
             dealerUp: dealerUp,
             timestamp: Date.now(),
-            wasDealerSaved: false
+            wasDealerSaved: false,
+            isUserHand: isUserHand
         });
         refreshUI();
     }
@@ -392,10 +416,36 @@ function calculateTrueCount() {
 
 function updateHUD() {
     const tc = calculateTrueCount();
+    const cardsPerDeck = 52;
+    const totalCards = state.deckCount * cardsPerDeck;
+    const penetration = (state.totalCardsDealt / totalCards) * 100;
+
     elements.runningCount.textContent = state.runningCount;
     elements.trueCount.textContent = tc.toFixed(2);
     elements.decksRemaining.textContent = (state.deckCount - (state.totalCardsDealt / 52)).toFixed(1);
+    
+    // Update Penetration UI
+    if (elements.penetrationVal) elements.penetrationVal.textContent = `${penetration.toFixed(1)}%`;
+    if (elements.penetrationBar) elements.penetrationBar.style.width = `${Math.min(100, penetration)}%`;
+
     elements.trueCount.style.color = tc >= 2 ? 'var(--accent-success)' : tc <= -2 ? 'var(--accent-danger)' : 'var(--accent-gold)';
+    
+    updateBettingAdvice(tc);
+}
+
+function updateBettingAdvice(tc) {
+    // Basic Edge: -0.5% (House Edge)
+    // Hi-Lo Edge: +0.5% per True Count point
+    const edge = -0.5 + (tc * 0.5);
+    const multiplier = tc <= 1 ? 1 : Math.max(1, Math.floor(tc));
+    const recBet = state.unitSize * multiplier;
+
+    if (elements.betMultiplier) elements.betMultiplier.textContent = `${multiplier}x Unit`;
+    if (elements.recBetVal) elements.recBetVal.textContent = `€${recBet}`;
+    if (elements.edgeVal) {
+        elements.edgeVal.textContent = `${edge >= 0 ? '+' : ''}${edge.toFixed(2)}%`;
+        elements.edgeVal.style.color = edge > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+    }
 }
 
 function updateAdvice() {
@@ -416,6 +466,14 @@ function updateAdvice() {
     let move = "HIT";
     let isDeviation = false;
 
+    // --- Insurance Advisor ---
+    if (dealerVal === 11 && tc >= 3) {
+        elements.adviceOutput.textContent = "INSURANCE";
+        elements.adviceOutput.className = "advice-value insurance pulse";
+        elements.adviceDetails.textContent = `★ TC is ${tc.toFixed(1)} - Take Insurance! ★`;
+        return;
+    }
+
     if (!state.splitActive && playerActiveCards.length === 2 && playerActiveCards[0] === playerActiveCards[1]) {
         elements.splitBtn.classList.remove('hidden');
     } else {
@@ -430,7 +488,30 @@ function updateAdvice() {
         return;
     }
 
-    if (handInfo.isPair && playerActiveCards.length === 2) move = STRATEGY.pairs[handInfo.sum][dIdx];
+    // --- Fab 4 Surrender ---
+    if (playerActiveCards.length === 2) {
+        if (handInfo.sum === 15 && dealerVal === 10 && tc >= 0) move = 'SUR';
+        else if (handInfo.sum === 15 && dealerVal === 9 && tc >= 2) move = 'SUR';
+        else if (handInfo.sum === 15 && dealerVal === 11 && tc >= 1) move = 'SUR';
+        else if (handInfo.sum === 14 && dealerVal === 10 && tc >= 3) move = 'SUR';
+        
+        if (move === 'SUR') {
+            elements.adviceOutput.textContent = "SURRENDER";
+            elements.adviceOutput.className = "advice-value surrender pulse";
+            elements.adviceDetails.textContent = `★ Deviation: Surrender vs D-${dealerVal}`;
+            return;
+        }
+    }
+
+    if (handInfo.isPair && playerActiveCards.length === 2) {
+        move = STRATEGY.pairs[handInfo.sum][dIdx];
+        // Illustrious 18: 10,10 Split
+        if (handInfo.sum === 20) {
+            if (dealerVal === 5 && tc >= 5) { move = 'P'; isDeviation = true; }
+            else if (dealerVal === 6 && tc >= 4) { move = 'P'; isDeviation = true; }
+            else move = 'S';
+        }
+    }
     else if (handInfo.isSoft) {
         const softSum = handInfo.sum;
         if (softSum >= 19) move = 'S';
@@ -445,16 +526,30 @@ function updateAdvice() {
         if (move === 'D' && playerActiveCards.length > 2) move = 'H';
     }
 
+    // --- Illustrious 18 Deviations ---
     if (!handInfo.isSoft && !handInfo.isPair) {
+        // Stand Deviations
         if (handInfo.sum === 16 && dealerVal === 10 && tc >= 0 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 16 && dealerVal === 9 && tc >= 5 && move === 'H') { move = 'S'; isDeviation = true; }
         if (handInfo.sum === 15 && dealerVal === 10 && tc >= 4 && move === 'H') { move = 'S'; isDeviation = true; }
-        if (handInfo.sum === 12 && dealerVal === 3 && tc >= 2 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 13 && dealerVal === 2 && tc >= -1 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 13 && dealerVal === 3 && tc >= -2 && move === 'H') { move = 'S'; isDeviation = true; }
         if (handInfo.sum === 12 && dealerVal === 2 && tc >= 3 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 12 && dealerVal === 3 && tc >= 2 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 12 && dealerVal === 4 && tc >= 0 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 12 && dealerVal === 5 && tc >= -2 && move === 'H') { move = 'S'; isDeviation = true; }
+        if (handInfo.sum === 12 && dealerVal === 6 && tc >= -1 && move === 'H') { move = 'S'; isDeviation = true; }
+        
+        // Double Deviations
+        if (handInfo.sum === 11 && dealerVal === 11 && tc >= 1 && move === 'H') { move = 'D'; isDeviation = true; }
         if (handInfo.sum === 10 && dealerVal === 10 && tc >= 4 && move === 'H') { move = 'D'; isDeviation = true; }
+        if (handInfo.sum === 10 && dealerVal === 11 && tc >= 4 && move === 'H') { move = 'D'; isDeviation = true; }
+        if (handInfo.sum === 9 && dealerVal === 2 && tc >= 1 && move === 'H') { move = 'D'; isDeviation = true; }
+        if (handInfo.sum === 9 && dealerVal === 7 && tc >= 3 && move === 'H') { move = 'D'; isDeviation = true; }
     }
 
-    const moveMap = { 'H': 'HIT', 'S': 'STAND', 'D': 'DOUBLE', 'P': 'SPLIT', 'INSURANCE?': 'INSURE' };
-    const classMap = { 'H': 'hit', 'S': 'stand', 'D': 'double', 'P': 'split', 'INSURANCE?': 'double' };
+    const moveMap = { 'H': 'HIT', 'S': 'STAND', 'D': 'DOUBLE', 'P': 'SPLIT', 'SUR': 'SURRENDER' };
+    const classMap = { 'H': 'hit', 'S': 'stand', 'D': 'double', 'P': 'split', 'SUR': 'surrender' };
     
     elements.adviceOutput.textContent = moveMap[move];
     elements.adviceOutput.className = `advice-value ${classMap[move]}`;
@@ -545,14 +640,23 @@ function refreshAnomalies() {
     
     state.anomalies.slice(-5).reverse().forEach(anom => {
         const div = document.createElement('div');
-        div.className = `anomaly-item ${anom.wasDealerSaved ? 'dealer-save' : ''}`;
+        const typeClass = anom.isUserHand ? 'user-dev' : 'bot-hit';
+        const typeLabel = anom.wasDealerSaved ? 'DEALER SAVE' : (anom.isUserHand ? 'USER DEVIATION' : 'GHOST CARD');
+        
+        div.className = `anomaly-item ${anom.wasDealerSaved ? 'dealer-save' : ''} ${typeClass}`;
         div.innerHTML = `
-            <span class="anom-tag">${anom.wasDealerSaved ? 'DEALER SAVE' : 'BOT HIT'}</span>
-            <span class="anom-text">Total <strong>${anom.total}</strong> hit <strong>${anom.card}</strong> vs <strong>D-${anom.dealerUp}</strong></span>
+            <span class="anom-tag">${typeLabel}</span>
+            <span class="anom-text">${anom.isUserHand ? 'Hand ' + (state.activeHandIndex+1) : 'Bot'} hit <strong>${anom.card}</strong> vs <strong>D-${anom.dealerUp}</strong></span>
             ${anom.wasDealerSaved ? '<div class="save-indicator">⚠️ Dealer saved from BUST!</div>' : ''}
         `;
         elements.anomalyList.appendChild(div);
     });
+
+    const btn = document.getElementById('btn-track-bot-hit');
+    if (!state.botHitTracking.active) {
+        btn.textContent = "TRACK BOT CARD";
+        btn.style.background = "";
+    }
 }
 
 function clearTable() {
@@ -572,7 +676,14 @@ function resetShoe() {
 
 function resetStats() {
     state.stats = { win: 0, loss: 0, push: 0 };
+    resetAnomalies();
     updateStatsUI();
+    saveToStorage();
+}
+
+function resetAnomalies() {
+    state.anomalies = [];
+    refreshAnomalies();
     saveToStorage();
 }
 

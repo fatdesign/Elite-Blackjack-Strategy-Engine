@@ -34,6 +34,34 @@
                     <span class="label">Decks Remaining</span>
                     <span id="decks-remaining" class="value">8.0</span>
                 </div>
+                <!-- Deck Penetration Bar -->
+                <div class="penetration-container">
+                    <div class="label-row">
+                        <span class="label">Penetration</span>
+                        <span id="penetration-val" class="value-small">0%</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div id="penetration-bar" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Betting Recommendation -->
+            <section class="settings card betting-card">
+                <div class="stats-header">
+                    <h3>Betting Advice</h3>
+                    <span id="bet-multiplier" class="bet-badge">1.0x Unit</span>
+                </div>
+                <div class="bet-details">
+                    <div class="bet-row">
+                        <span class="label">Rec. Bet</span>
+                        <span id="rec-bet-val" class="value-gold">€10</span>
+                    </div>
+                    <div class="bet-row">
+                        <span class="label">Edge</span>
+                        <span id="edge-val" class="value-small">+0.0%</span>
+                    </div>
+                </div>
             </section>
 
             <section class="settings card">
@@ -64,7 +92,10 @@
             <section class="settings card anom-card">
                 <div class="stats-header">
                     <h3>Anomaly Tracker</h3>
-                    <span id="anomaly-count" class="anom-badge">0</span>
+                    <div class="header-actions">
+                        <span id="anomaly-count" class="anom-badge">0</span>
+                        <button id="reset-anomalies" class="text-btn">Clear</button>
+                    </div>
                 </div>
                 <div id="anomaly-list" class="anomaly-log">
                     <!-- Anomaly items injected via JS -->
@@ -179,9 +210,11 @@
                 </div>
             </div>
 
-            <!-- Table Tracking Feed -->
             <div class="table-tracking-area">
-                <span class="area-label">Table Feed (Other Players / Discards)</span>
+                <div class="stats-header">
+                    <span class="area-label">Table Feed (Other Players / Discards)</span>
+                    <button id="btn-track-bot-hit" class="special-btn pulse">TRACK BOT CARD</button>
+                </div>
                 <div id="table-history-feed" class="history-grid"></div>
             </div>
 
