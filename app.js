@@ -8,7 +8,7 @@ const state = {
     activeHandIndex: 0,
     tableHistory: [],
     dealerHitsS17: false,
-    activeSlot: { type: 'dealer', index: 0, hand: 0 },
+    activeSlot: { type: 'player', index: 0, hand: 0 },
     tableMode: false,
     history: [],
     stats: { win: 0, loss: 0, push: 0 },
@@ -491,7 +491,7 @@ function refreshUI() {
 
 function clearTable() {
     state.playerHands = [[], []]; state.dealerHand = [];
-    state.activeSlot = { type: 'dealer', index: 0, hand: 0 };
+    state.activeSlot = { type: 'player', index: 0, hand: 0 };
     state.activeHandIndex = 0;
     state.splitActive = false;
     elements.hand2.classList.add('hidden');
