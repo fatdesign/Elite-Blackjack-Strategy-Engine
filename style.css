@@ -13,6 +13,9 @@
     --text-primary: #ffffff;
     --text-secondary: #a0a0a5;
     --glass-blur: blur(12px);
+    --risk-low: #00ff88;
+    --risk-med: #ffaa00;
+    --risk-high: #ff4d4d;
 }
 
 * {
@@ -98,6 +101,16 @@ header p {
     text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
+.item-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.hud-sub {
+    display: flex;
+    flex-direction: column;
+}
+
 .stats-row {
     display: flex;
     justify-content: space-between;
@@ -180,7 +193,7 @@ header p {
 .setting-row { margin-bottom: 0.75rem; }
 .setting-row label { display: block; font-size: 0.75rem; margin-bottom: 0.4rem; }
 
-select, .toggle-btn {
+select, .toggle-btn, input[type="number"] {
     width: 100%;
     background: #25252b;
     border: 1px solid var(--border-color);
@@ -189,6 +202,16 @@ select, .toggle-btn {
     border-radius: 10px;
     outline: none;
     font-size: 0.75rem;
+}
+
+input[type="number"]:focus {
+    border-color: var(--accent-gold);
+}
+
+.separator-dots {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    margin: 1.2rem 0;
 }
 
 .toggle-group { display: flex; gap: 6px; }

@@ -17,9 +17,15 @@
             </header>
 
             <section class="counting-hud card">
-                <div class="hud-item">
-                    <span class="label">Running Count</span>
-                    <span id="running-count" class="value">0</span>
+                <div class="hud-item item-row">
+                    <div class="hud-sub">
+                        <span class="label">Running Count</span>
+                        <span id="running-count" class="value">0</span>
+                    </div>
+                    <div class="hud-sub">
+                        <span class="label">Ace Density</span>
+                        <span id="ace-density" class="value-small highlight">NEUTRAL</span>
+                    </div>
                 </div>
                 <div class="hud-item highlight">
                     <span class="label">True Count</span>
@@ -46,10 +52,10 @@
                 </div>
             </section>
 
-            <!-- Betting Recommendation -->
+            <!-- Betting & Bankroll Management -->
             <section class="settings card betting-card">
                 <div class="stats-header">
-                    <h3>Betting Advice</h3>
+                    <h3>Betting & Bankroll</h3>
                     <span id="bet-multiplier" class="bet-badge">1.0x Unit</span>
                 </div>
                 <div class="bet-details">
@@ -60,6 +66,11 @@
                     <div class="bet-row">
                         <span class="label">Edge</span>
                         <span id="edge-val" class="value-small">+0.0%</span>
+                    </div>
+                    <div class="separator-dots"></div>
+                    <div class="bet-row">
+                        <span class="label">Risk of Ruin</span>
+                        <span id="ror-val" class="value-small">0.0%</span>
                     </div>
                 </div>
             </section>
@@ -86,10 +97,27 @@
                 <div class="win-rate">
                     <span>Win Rate: </span><span id="win-rate-val">0%</span>
                 </div>
+                <button id="export-logs" class="text-btn" style="margin-top: 10px; width: 100%; border-top: 1px solid var(--border-color); padding-top: 10px;">Download Session Logs (.csv)</button>
             </section>
 
             <section class="settings card">
-                <h3>Table Rules</h3>
+                <h3>Strategy & Bankroll</h3>
+                <div class="setting-row">
+                    <label for="bankroll-input">Total Bankroll (€)</label>
+                    <input type="number" id="bankroll-input" value="1000" step="100">
+                </div>
+                <div class="setting-row">
+                    <label for="unit-size-input">Unit Size (€)</label>
+                    <input type="number" id="unit-size-input" value="10" step="5">
+                </div>
+                <div class="setting-row">
+                    <label>Betting Aggression</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" id="mode-kelly-1-2">1/2 Kelly</button>
+                        <button class="toggle-btn" id="mode-kelly-full">Full</button>
+                    </div>
+                </div>
+                <div class="separator-dots"></div>
                 <div class="setting-row">
                     <label for="deck-count">Number of Decks</label>
                     <select id="deck-count">
@@ -156,7 +184,10 @@
 
             <div class="game-area">
                 <div class="dealer-hand">
-                    <span class="area-label">Dealer Hand <span id="dealer-total" class="total-badge"></span></span>
+                    <div class="stats-header">
+                        <span class="area-label">Dealer Hand <span id="dealer-total" class="total-badge"></span></span>
+                        <span id="dealer-bust-prob" class="bet-badge hidden" style="background: rgba(255, 77, 77, 0.15); color: var(--accent-danger); border-color: rgba(255, 77, 77, 0.3);">Bust: 43%</span>
+                    </div>
                     <div id="dealer-card-input" class="card-slots">
                         <div class="slot empty active" data-type="dealer" data-index="0">+</div>
                         <div class="slot empty" data-type="dealer" data-index="1">+</div>

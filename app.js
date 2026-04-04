@@ -14,7 +14,10 @@ const state = {
     stats: { win: 0, loss: 0, push: 0 },
     splitActive: false,
     unitSize: 10,
-    bankroll: 1000
+    bankroll: 1000,
+    aceCount: 0,
+    kellyMode: '1/2',
+    targetGoal: 2000
 };
 
 const COUNT_VALUES = {
@@ -96,7 +99,15 @@ const elements = {
     penetrationBar: document.getElementById('penetration-bar'),
     betMultiplier: document.getElementById('bet-multiplier'),
     recBetVal: document.getElementById('rec-bet-val'),
-    edgeVal: document.getElementById('edge-val')
+    edgeVal: document.getElementById('edge-val'),
+    aceDensity: document.getElementById('ace-density'),
+    rorVal: document.getElementById('ror-val'),
+    bankrollInput: document.getElementById('bankroll-input'),
+    unitSizeInput: document.getElementById('unit-size-input'),
+    modeKelly12: document.getElementById('mode-kelly-1-2'),
+    modeKellyFull: document.getElementById('mode-kelly-full'),
+    dealerBustProb: document.getElementById('dealer-bust-prob'),
+    exportLogsBtn: document.getElementById('export-logs')
 };
 
 function init() {
@@ -150,6 +161,32 @@ function setupEventListeners() {
         elements.s17Stand.classList.remove('active');
         refreshUI();
     });
+
+    elements.bankrollInput.addEventListener('change', (e) => {
+        state.bankroll = parseFloat(e.target.value) || 1000;
+        refreshUI();
+    });
+
+    elements.unitSizeInput.addEventListener('change', (e) => {
+        state.unitSize = parseFloat(e.target.value) || 10;
+        refreshUI();
+    });
+
+    elements.modeKelly12.addEventListener('click', () => {
+        state.kellyMode = '1/2';
+        elements.modeKelly12.classList.add('active');
+        elements.modeKellyFull.classList.remove('active');
+        refreshUI();
+    });
+
+    elements.modeKellyFull.addEventListener('click', () => {
+        state.kellyMode = 'full';
+        elements.modeKellyFull.classList.add('active');
+        elements.modeKelly12.classList.remove('active');
+        refreshUI();
+    });
+
+    elements.exportLogsBtn.addEventListener('click', exportSessionCSV);
 }
 
 // Persistence Methods
@@ -238,6 +275,8 @@ function addCard(val) {
         state.playerHands[state.activeHandIndex][state.activeSlot.index] = val;
     }
     
+    if (val === 'A') state.aceCount++;
+    
     refreshUI();
     advanceSlot();
     updateAdvice();
@@ -252,6 +291,8 @@ function addTableCard(val) {
     state.totalCardsDealt++;
     state.tableHistory.push(val);
     
+    if (val === 'A') state.aceCount++;
+
     refreshUI();
 }
 
@@ -275,6 +316,14 @@ function executeSplit() {
 
 function recordOutcome(type) {
     state.stats[type]++;
+    // Log the round for export
+    state.history.push({
+        timestamp: new Date().toLocaleTimeString(),
+        type: type,
+        tc: calculateTrueCount().toFixed(2),
+        rc: state.runningCount,
+        bet: state.unitSize * Math.max(1, Math.floor(calculateTrueCount() * (state.kellyMode === '1/2' ? 0.5 : 1) * 2))
+    });
     updateStatsUI();
     clearTable();
 }
@@ -314,6 +363,8 @@ function undoLastAction() {
         state.splitActive = false;
         elements.hand2.classList.add('hidden');
     }
+    
+    if (lastAction.val === 'A') state.aceCount--;
     
     refreshUI();
 }
@@ -361,20 +412,56 @@ function updateHUD() {
     elements.trueCount.textContent = tc.toFixed(2);
     elements.decksRemaining.textContent = (state.deckCount - (state.totalCardsDealt / 52)).toFixed(1);
     
+    // Ace Density Calculation
+    const expectedAces = (state.totalCardsDealt / 13);
+    const aceDiff = expectedAces - state.aceCount;
+    let densityText = "NEUTRAL";
+    let densityColor = "var(--text-secondary)";
+    
+    if (aceDiff >= 1) { densityText = "ACE RICH"; densityColor = "var(--accent-success)"; }
+    else if (aceDiff <= -1) { densityText = "ACE POOR"; densityColor = "var(--accent-danger)"; }
+    
+    if (elements.aceDensity) {
+        elements.aceDensity.textContent = densityText;
+        elements.aceDensity.style.color = densityColor;
+    }
+
     // Update Penetration UI
     if (elements.penetrationVal) elements.penetrationVal.textContent = `${penetration.toFixed(1)}%`;
     if (elements.penetrationBar) elements.penetrationBar.style.width = `${Math.min(100, penetration)}%`;
 
     elements.trueCount.style.color = tc >= 2 ? 'var(--accent-success)' : tc <= -2 ? 'var(--accent-danger)' : 'var(--accent-gold)';
     
-    updateBettingAdvice(tc);
+    updateDealerBustHUD(tc);
+    updateBettingAdvice(tc, aceDiff);
 }
 
-function updateBettingAdvice(tc) {
+function updateDealerBustHUD(tc) {
+    if (!elements.dealerBustProb) return;
+    const dealerUp = state.dealerHand[0];
+    if (!dealerUp) {
+        elements.dealerBustProb.classList.add('hidden');
+        return;
+    }
+    
+    elements.dealerBustProb.classList.remove('hidden');
+    const baseBust = { '2': 35, '3': 37, '4': 40, '5': 43, '6': 42, '7': 26, '8': 24, '9': 23, '10': 21, 'J': 21, 'Q': 21, 'K': 21, 'A': 17 };
+    const val = dealerUp;
+    // Simple adjustment: Each point of TC adds or subtracts from bust chance
+    // High TC = more big cards = dealer busts more on 2-6
+    const adjustment = getCardValue(val) <= 6 ? tc * 1.5 : -tc * 0.5;
+    const prob = Math.min(60, Math.max(5, baseBust[val] + adjustment));
+    elements.dealerBustProb.textContent = `Bust: ${prob.toFixed(0)}%`;
+}
+
+function updateBettingAdvice(tc, aceDiff) {
     // Basic Edge: -0.5% (House Edge)
     // Hi-Lo Edge: +0.5% per True Count point
-    const edge = -0.5 + (tc * 0.5);
-    const multiplier = tc <= 1 ? 1 : Math.max(1, Math.floor(tc));
+    // Ace Neutrality: +0.1% per Ace point
+    let edge = -0.5 + (tc * 0.5) + (aceDiff * 0.1);
+    
+    const kellyFactor = state.kellyMode === '1/2' ? 0.5 : 1.0;
+    const multiplier = edge <= 0 ? 1 : Math.max(1, Math.floor(tc * kellyFactor * 2));
     const recBet = state.unitSize * multiplier;
 
     if (elements.betMultiplier) elements.betMultiplier.textContent = `${multiplier}x Unit`;
@@ -382,6 +469,21 @@ function updateBettingAdvice(tc) {
     if (elements.edgeVal) {
         elements.edgeVal.textContent = `${edge >= 0 ? '+' : ''}${edge.toFixed(2)}%`;
         elements.edgeVal.style.color = edge > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+    }
+
+    // Risk of Ruin Approximation
+    // RoR = exp(-2 * Edge * Bankroll / (Variance * Unit^2))
+    // Variance per hand is approx 1.15
+    if (elements.rorVal) {
+        if (edge <= 0) {
+            elements.rorVal.textContent = "100%";
+            elements.rorVal.style.color = "var(--risk-high)";
+        } else {
+            const ror = Math.exp(-2 * (edge/100) * state.bankroll / (1.15 * Math.pow(state.unitSize, 2)));
+            const rorPercent = (ror * 100).toFixed(2);
+            elements.rorVal.textContent = `${rorPercent}%`;
+            elements.rorVal.style.color = rorPercent < 1 ? "var(--risk-low)" : rorPercent < 5 ? "var(--risk-med)" : "var(--risk-high)";
+        }
     }
 }
 
@@ -477,12 +579,34 @@ function updateAdvice() {
         if (handInfo.sum === 12 && dealerVal === 5 && tc >= -2 && move === 'H') { move = 'S'; isDeviation = true; }
         if (handInfo.sum === 12 && dealerVal === 6 && tc >= -1 && move === 'H') { move = 'S'; isDeviation = true; }
         
+        // --- Composition-Dependent Exceptions ---
+        // 12 (10+2) vs 4 -> Standard move is S, but with exactly 10+2, the removal of the 10 makes it slightly better to hit at very low counts.
+        // For simplicity, we flag common CD errors:
+        const hasTen = playerActiveCards.some(c => ['10', 'J', 'Q', 'K'].includes(c));
+        if (handInfo.sum === 12 && dealerVal === 4 && hasTen && tc < 0) { move = 'H'; isDeviation = true; }
+
         // Double Deviations
         if (handInfo.sum === 11 && dealerVal === 11 && tc >= 1 && move === 'H') { move = 'D'; isDeviation = true; }
         if (handInfo.sum === 10 && dealerVal === 10 && tc >= 4 && move === 'H') { move = 'D'; isDeviation = true; }
         if (handInfo.sum === 10 && dealerVal === 11 && tc >= 4 && move === 'H') { move = 'D'; isDeviation = true; }
         if (handInfo.sum === 9 && dealerVal === 2 && tc >= 1 && move === 'H') { move = 'D'; isDeviation = true; }
         if (handInfo.sum === 9 && dealerVal === 7 && tc >= 3 && move === 'H') { move = 'D'; isDeviation = true; }
+
+        // --- Master Strategist Expansion: Soft Hand & Advanced Deviations ---
+        if (handInfo.isSoft) {
+            if (handInfo.sum === 13 && dealerVal === 5 && tc >= 1 && move === 'H') { move = 'D'; isDeviation = true; }
+            if (handInfo.sum === 13 && dealerVal === 6 && tc >= -1 && move === 'H') { move = 'D'; isDeviation = true; }
+            if (handInfo.sum === 18 && dealerVal === 2 && tc >= 1 && move === 'S') { move = 'D'; isDeviation = true; }
+            if (handInfo.sum === 19 && dealerVal === 6 && tc >= 1 && move === 'S') { move = 'D'; isDeviation = true; }
+        }
+    }
+
+    // --- Side Bet Advisor & Wonging ---
+    let sideBetAdvice = "";
+    if (tc >= 4) sideBetAdvice = " [21+3 POSITIVE]";
+    if (tc <= -4) sideBetAdvice = " [POOR SHOE]";
+    if (tc <= -2.0 && (state.totalCardsDealt / (state.deckCount * 52)) < 0.7) {
+        sideBetAdvice = " [LOW ADVANTAGE - EXIT?]";
     }
 
     const moveMap = { 'H': 'HIT', 'S': 'STAND', 'D': 'DOUBLE', 'P': 'SPLIT', 'SUR': 'SURRENDER' };
@@ -490,7 +614,7 @@ function updateAdvice() {
     
     elements.adviceOutput.textContent = moveMap[move];
     elements.adviceOutput.className = `advice-value ${classMap[move]}`;
-    elements.adviceDetails.textContent = `${isDeviation ? '★ DEVIATION ★ ' : ''}Hand ${state.activeHandIndex + 1}: ${handInfo.isSoft ? 'Soft' : handInfo.isPair ? 'Pair' : 'Hard'} ${handInfo.sum}`;
+    elements.adviceDetails.textContent = `${isDeviation ? '★ DEVIATION ★ ' : ''}Hand ${state.activeHandIndex + 1}: ${handInfo.isSoft ? 'Soft' : handInfo.isPair ? 'Pair' : 'Hard'} ${handInfo.sum}${sideBetAdvice}`;
 }
 
 function analyzeHand(cards) {
@@ -581,6 +705,7 @@ function clearTable() {
 
 function resetShoe() {
     state.runningCount = 0; state.totalCardsDealt = 0;
+    state.aceCount = 0;
     state.history = []; state.tableHistory = [];
     clearTable();
 }
@@ -593,3 +718,19 @@ function resetStats() {
 
 
 init();
+
+function exportSessionCSV() {
+    if (state.history.length === 0) return alert("No data to export yet.");
+    
+    let csv = "Timestamp,Result,True Count,Running Count,Bet Size\n";
+    state.history.forEach(row => {
+        csv += `${row.timestamp},${row.type},${row.tc},${row.rc},€${row.bet}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `blackjack_session_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+}
