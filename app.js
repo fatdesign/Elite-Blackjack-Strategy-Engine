@@ -13,7 +13,6 @@ const state = {
     history: [],
     stats: { win: 0, loss: 0, push: 0 },
     splitActive: false,
-    anomalies: [],
     unitSize: 10,
     bankroll: 1000
 };
@@ -93,7 +92,6 @@ const elements = {
     playerTotal1: document.getElementById('player-total-1'),
     hand1: document.getElementById('hand-1'),
     hand2: document.getElementById('hand-2'),
-    anomalyCountBadge: document.getElementById('anomaly-count'),
     penetrationVal: document.getElementById('penetration-val'),
     penetrationBar: document.getElementById('penetration-bar'),
     betMultiplier: document.getElementById('bet-multiplier'),
@@ -127,7 +125,7 @@ function setupEventListeners() {
     elements.undoBtn.addEventListener('click', undoLastAction);
     elements.resetShoeBtn.addEventListener('click', resetShoe);
     elements.resetStatsBtn.addEventListener('click', resetStats);
-    document.getElementById('reset-anomalies').addEventListener('click', resetAnomalies);
+    elements.resetStatsBtn.addEventListener('click', () => resetStats());
     elements.splitBtn.addEventListener('click', executeSplit);
     
     elements.outcomeWin.addEventListener('click', () => recordOutcome('win'));
@@ -237,13 +235,7 @@ function addCard(val) {
     if (state.activeSlot.type === 'dealer') {
         state.dealerHand[state.activeSlot.index] = val;
     } else {
-        const handBefore = analyzeHand(state.playerHands[state.activeHandIndex].filter(Boolean).filter(c => c !== val)).sum;
         state.playerHands[state.activeHandIndex][state.activeSlot.index] = val;
-        // Check for suspicious hit (if hit and was already at 17+ or similar)
-        if (state.activeSlot.index > 1) { // It's a Hit, not initial 2 cards
-             const dealerUp = state.dealerHand[0];
-             if (dealerUp) checkAnomaly(val, handBefore, dealerUp, true);
-        }
     }
     
     refreshUI();
@@ -263,23 +255,6 @@ function addTableCard(val) {
     refreshUI();
 }
 
-function checkAnomaly(val, handTotalBeforeHit, dealerUp, isUserHand = false) {
-    const dVal = getCardValue(dealerUp);
-    const isSuspicious = (handTotalBeforeHit >= 17) || (handTotalBeforeHit >= 12 && dVal <= 6);
-    
-    if (isSuspicious) {
-        state.anomalies.push({
-            type: 'suspicious_hit',
-            card: val,
-            total: handTotalBeforeHit,
-            dealerUp: dealerUp,
-            timestamp: Date.now(),
-            wasDealerSaved: false,
-            isUserHand: isUserHand
-        });
-        refreshUI();
-    }
-}
 
 function executeSplit() {
     if (state.playerHands[0].length !== 2) return;
@@ -300,20 +275,6 @@ function executeSplit() {
 
 function recordOutcome(type) {
     state.stats[type]++;
-    // Retroactive check for Dealer Saves
-    const dealerActive = state.dealerHand.filter(Boolean);
-    const dTotal = analyzeHand(dealerActive).sum;
-    
-    state.anomalies.forEach(anom => {
-        if (!anom.wasDealerSaved && anom.timestamp > Date.now() - 600000) { // last 10 mins
-            const cardVal = getCardValue(anom.card);
-            // If the dealer didn't bust, but adding the 'stolen' card would have made him bust
-            if (dTotal <= 21 && (dTotal + cardVal > 21)) {
-                anom.wasDealerSaved = true;
-            }
-        }
-    });
-    
     updateStatsUI();
     clearTable();
 }
@@ -605,29 +566,9 @@ function refreshUI() {
     updateHUD(); 
     updateStatsUI(); 
     updateAdvice();
-    refreshAnomalies();
     saveToStorage(); // New
 }
 
-function refreshAnomalies() {
-    if (!elements.anomalyList) return;
-    elements.anomalyList.innerHTML = '';
-    elements.anomalyCountBadge.textContent = state.anomalies.length;
-    
-    state.anomalies.slice(-5).reverse().forEach(anom => {
-        const div = document.createElement('div');
-        const typeClass = anom.isUserHand ? 'user-dev' : 'bot-hit';
-        const typeLabel = anom.wasDealerSaved ? 'DEALER SAVE' : (anom.isUserHand ? 'USER DEVIATION' : 'GHOST CARD');
-        
-        div.className = `anomaly-item ${anom.wasDealerSaved ? 'dealer-save' : ''} ${typeClass}`;
-        div.innerHTML = `
-            <span class="anom-tag">${typeLabel}</span>
-            <span class="anom-text">${anom.isUserHand ? 'Hand ' + (state.activeHandIndex+1) : 'Bot'} hit <strong>${anom.card}</strong> vs <strong>D-${anom.dealerUp}</strong></span>
-            ${anom.wasDealerSaved ? '<div class="save-indicator">⚠️ Dealer saved from BUST!</div>' : ''}
-        `;
-        elements.anomalyList.appendChild(div);
-    });
-}
 
 function clearTable() {
     state.playerHands = [[], []]; state.dealerHand = [];
@@ -646,15 +587,9 @@ function resetShoe() {
 
 function resetStats() {
     state.stats = { win: 0, loss: 0, push: 0 };
-    resetAnomalies();
     updateStatsUI();
     saveToStorage();
 }
 
-function resetAnomalies() {
-    state.anomalies = [];
-    refreshAnomalies();
-    saveToStorage();
-}
 
 init();
