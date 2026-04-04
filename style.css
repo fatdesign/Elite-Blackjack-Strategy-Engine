@@ -451,3 +451,71 @@ button {
 .pulse { animation: pulse 2.5s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+/* Anomaly Tracker Styling */
+.anom-card {
+    border-color: rgba(255, 77, 77, 0.2) !important;
+}
+
+.anom-badge {
+    background: var(--accent-danger);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.anomaly-log {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.anomaly-item {
+    background: rgba(255, 77, 77, 0.05);
+    border-left: 3px solid var(--accent-danger);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    animation: fade-in 0.3s ease-out;
+    position: relative;
+}
+
+.anomaly-item.dealer-save {
+    background: rgba(255, 165, 0, 0.1);
+    border-left-color: #ffa500;
+}
+
+.dealer-save .anom-tag {
+    color: #ffa500;
+}
+
+.save-indicator {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+    animation: pulse 1s infinite alternate;
+}
+
+.anom-tag {
+    display: block;
+    color: var(--accent-danger);
+    font-weight: 800;
+    font-size: 0.65rem;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.anom-text strong {
+    color: white;
+    font-weight: 700;
+}

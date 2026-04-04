@@ -12,7 +12,8 @@ const state = {
     tableMode: false,
     history: [],
     stats: { win: 0, loss: 0, push: 0 },
-    splitActive: false
+    splitActive: false,
+    anomalies: [] // New: {type: 'suspicious_hit', card: '10', total: 18, dealerUp: '5', timestamp: Date.now()}
 };
 
 const COUNT_VALUES = {
@@ -89,7 +90,9 @@ const elements = {
     playerTotal0: document.getElementById('player-total-0'),
     playerTotal1: document.getElementById('player-total-1'),
     hand1: document.getElementById('hand-1'),
-    hand2: document.getElementById('hand-2')
+    hand2: document.getElementById('hand-2'),
+    anomalyList: document.getElementById('anomaly-list'),
+    anomalyCountBadge: document.getElementById('anomaly-count')
 };
 
 function init() {
@@ -227,7 +230,13 @@ function addCard(val) {
     if (state.activeSlot.type === 'dealer') {
         state.dealerHand[state.activeSlot.index] = val;
     } else {
+        const handBefore = analyzeHand(state.playerHands[state.activeHandIndex].filter(Boolean).filter(c => c !== val)).sum;
         state.playerHands[state.activeHandIndex][state.activeSlot.index] = val;
+        // Check for suspicious hit (if hit and was already at 17+ or similar)
+        if (state.activeSlot.index > 1) { // It's a Hit, not initial 2 cards
+             const dealerUp = state.dealerHand[0];
+             if (dealerUp) checkAnomaly(val, handBefore, dealerUp);
+        }
     }
     
     refreshUI();
@@ -236,6 +245,10 @@ function addCard(val) {
 }
 
 function addTableCard(val) {
+    // Check for anomaly before adding
+    // Simplification: In 'Table Mode', we can't always know the total, 
+    // unless we assume the card is hit by a bot.
+    // Let's add a heuristic: if we see a Hit during a high count, it's worth noting.
     state.history.push({
         val, type: 'table', index: state.tableHistory.length,
         prevRunningCount: state.runningCount, prevTotalDealt: state.totalCardsDealt
@@ -243,7 +256,29 @@ function addTableCard(val) {
     state.runningCount += COUNT_VALUES[val];
     state.totalCardsDealt++;
     state.tableHistory.push(val);
+    
+    // Anomaly heuristic for Table Feed: if card is 10/Face and running count was extremely high, 
+    // maybe note it if it's a suspicious 'eating' pattern? 
+    // For now, only focus on verified Hand inputs or user-marked cards.
+    
     refreshUI();
+}
+
+function checkAnomaly(val, handTotalBeforeHit, dealerUp) {
+    const dVal = getCardValue(dealerUp);
+    const isSuspicious = (handTotalBeforeHit >= 17) || (handTotalBeforeHit >= 12 && dVal <= 6);
+    
+    if (isSuspicious) {
+        state.anomalies.push({
+            type: 'suspicious_hit',
+            card: val,
+            total: handTotalBeforeHit,
+            dealerUp: dealerUp,
+            timestamp: Date.now(),
+            wasDealerSaved: false
+        });
+        refreshUI();
+    }
 }
 
 function executeSplit() {
@@ -265,6 +300,20 @@ function executeSplit() {
 
 function recordOutcome(type) {
     state.stats[type]++;
+    // Retroactive check for Dealer Saves
+    const dealerActive = state.dealerHand.filter(Boolean);
+    const dTotal = analyzeHand(dealerActive).sum;
+    
+    state.anomalies.forEach(anom => {
+        if (!anom.wasDealerSaved && anom.timestamp > Date.now() - 600000) { // last 10 mins
+            const cardVal = getCardValue(anom.card);
+            // If the dealer didn't bust, but adding the 'stolen' card would have made him bust
+            if (dTotal <= 21 && (dTotal + cardVal > 21)) {
+                anom.wasDealerSaved = true;
+            }
+        }
+    });
+    
     updateStatsUI();
     clearTable();
 }
@@ -484,9 +533,26 @@ function refreshUI() {
     refreshTableFeed(); 
     updateHUD(); 
     updateStatsUI(); 
-    refreshHandHighlight();
     updateAdvice();
+    refreshAnomalies();
     saveToStorage(); // New
+}
+
+function refreshAnomalies() {
+    if (!elements.anomalyList) return;
+    elements.anomalyList.innerHTML = '';
+    elements.anomalyCountBadge.textContent = state.anomalies.length;
+    
+    state.anomalies.slice(-5).reverse().forEach(anom => {
+        const div = document.createElement('div');
+        div.className = `anomaly-item ${anom.wasDealerSaved ? 'dealer-save' : ''}`;
+        div.innerHTML = `
+            <span class="anom-tag">${anom.wasDealerSaved ? 'DEALER SAVE' : 'BOT HIT'}</span>
+            <span class="anom-text">Total <strong>${anom.total}</strong> hit <strong>${anom.card}</strong> vs <strong>D-${anom.dealerUp}</strong></span>
+            ${anom.wasDealerSaved ? '<div class="save-indicator">⚠️ Dealer saved from BUST!</div>' : ''}
+        `;
+        elements.anomalyList.appendChild(div);
+    });
 }
 
 function clearTable() {
