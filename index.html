@@ -125,6 +125,27 @@
                 </div>
                 <div class="separator-dots"></div>
                 <div class="setting-row">
+                    <label>Table Type</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" id="rng-mode-off">🎭 Live</button>
+                        <button class="toggle-btn" id="rng-mode-on">🎲 RNG</button>
+                    </div>
+                </div>
+                <!-- RNG Sidebar Confidence (hidden when RNG off) -->
+                <div id="rng-sidebar-indicator" class="rng-sidebar-indicator hidden">
+                    <div class="rng-sidebar-row">
+                        <span class="rng-sidebar-label">⚡ Shoe Confidence</span>
+                        <span id="rng-sidebar-val" class="rng-sidebar-val">0%</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div id="rng-sidebar-bar" class="progress-fill rng-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="rng-sidebar-row" style="margin-top: 2px;">
+                        <span class="rng-sidebar-label">Rounds tracked</span>
+                        <span id="rng-rounds-val" class="rng-sidebar-val">0</span>
+                    </div>
+                </div>
+                <div class="setting-row">
                     <label for="deck-count">Number of Decks</label>
                     <select id="deck-count">
                         <option value="1">1 Deck</option>
@@ -147,6 +168,25 @@
 
         <!-- Main Content: Game Interface & Strategy -->
         <main class="main-content">
+            <!-- RNG Warning Banner (hidden when RNG mode is off) -->
+            <div id="rng-warning-banner" class="rng-warning-banner hidden">
+                <div class="rng-header-row">
+                    <div class="rng-title">
+                        <span class="rng-icon">⚠️</span>
+                        RNG Table Mode Active
+                    </div>
+                    <span id="rng-status-badge" class="rng-status-badge uncertain">UNCERTAIN</span>
+                </div>
+                <div class="rng-confidence-row">
+                    <span class="rng-confidence-label">Shoe Confidence</span>
+                    <span id="rng-confidence-pct" class="rng-confidence-pct">0%</span>
+                </div>
+                <div class="progress-bg">
+                    <div id="rng-confidence-bar" class="progress-fill rng-fill" style="width: 0%"></div>
+                </div>
+                <p class="rng-note" id="rng-note-text">Shoe nicht verifiziert — Bet-Sizing basiert auf Base-Wahrscheinlichkeiten. Count wird beobachtet.</p>
+            </div>
+
             <section class="strategy-advice card">
                 <div class="advice-header">Optimal Move</div>
                 <div id="advice-output" class="advice-value pulse">WAITING</div>

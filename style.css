@@ -545,4 +545,169 @@ button {
 @keyframes fade-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
 
+/* =========================================
+   RNG MODE STYLES
+   ========================================= */
+
+/* RNG Mode button when active */
+.toggle-btn.rng-active {
+    background: linear-gradient(135deg, #ff8c00, #ffaa00) !important;
+    border-color: transparent !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.4);
+}
+
+/* Main RNG Warning Banner */
+.rng-warning-banner {
+    width: 100%;
+    max-width: 800px;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.12), rgba(255, 80, 0, 0.08));
+    border: 1px solid rgba(255, 165, 0, 0.35);
+    border-radius: 14px;
+    padding: 0.85rem 1.1rem;
+    animation: rng-pulse-border 3s infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.rng-warning-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ffaa00, transparent);
+    animation: rng-scan 2.5s linear infinite;
+}
+
+@keyframes rng-scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes rng-pulse-border {
+    0%, 100% { border-color: rgba(255, 165, 0, 0.35); box-shadow: 0 0 0px rgba(255, 165, 0, 0); }
+    50% { border-color: rgba(255, 165, 0, 0.6); box-shadow: 0 0 18px rgba(255, 165, 0, 0.12); }
+}
+
+.rng-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.rng-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #ffaa00;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rng-icon {
+    font-size: 0.9rem;
+}
+
+.rng-status-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.5s;
+}
+
+.rng-status-badge.uncertain {
+    background: rgba(255, 77, 77, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 77, 77, 0.3);
+}
+
+.rng-status-badge.building {
+    background: rgba(255, 170, 0, 0.15);
+    color: #ffaa00;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+}
+
+.rng-status-badge.stable {
+    background: rgba(0, 255, 136, 0.12);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.25);
+}
+
+.rng-confidence-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.rng-confidence-label {
+    font-size: 0.72rem;
+    color: rgba(255, 170, 0, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rng-confidence-pct {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffaa00;
+}
+
+.progress-fill.rng-fill {
+    background: linear-gradient(90deg, #ff4d4d, #ffaa00, #00ff88);
+}
+
+.rng-note {
+    font-size: 0.65rem;
+    color: rgba(255, 170, 0, 0.55);
+    margin-top: 0.6rem;
+    font-style: italic;
+}
+
+/* Sidebar RNG Confidence Mini Display */
+.rng-sidebar-indicator {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px 10px;
+    background: rgba(255, 140, 0, 0.08);
+    border: 1px solid rgba(255, 165, 0, 0.2);
+    border-radius: 10px;
+    margin-top: 4px;
+}
+
+.rng-sidebar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rng-sidebar-label {
+    font-size: 0.68rem;
+    color: rgba(255, 170, 0, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rng-sidebar-val {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ffaa00;
+}
+
+/* Betting edge displays dimmed when RNG + low confidence */
+.edge-unreliable {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* Win-rate value-small override */
+.win-rate { text-align: center; margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); }
+
 /* End of Styles */

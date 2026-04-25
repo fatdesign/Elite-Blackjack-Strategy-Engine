@@ -17,7 +17,10 @@ const state = {
     bankroll: 1000,
     aceCount: 0,
     kellyMode: '1/2',
-    targetGoal: 2000
+    targetGoal: 2000,
+    // RNG Mode
+    rngMode: false,
+    rngRoundsTracked: 0   // Completed rounds observed without shoe reset
 };
 
 const COUNT_VALUES = {
@@ -109,7 +112,19 @@ const elements = {
     modeKelly12: document.getElementById('mode-kelly-1-2'),
     modeKellyFull: document.getElementById('mode-kelly-full'),
     dealerBustProb: document.getElementById('dealer-bust-prob'),
-    exportLogsBtn: document.getElementById('export-logs')
+    exportLogsBtn: document.getElementById('export-logs'),
+    // RNG Mode elements
+    rngModeOff: document.getElementById('rng-mode-off'),
+    rngModeOn: document.getElementById('rng-mode-on'),
+    rngWarningBanner: document.getElementById('rng-warning-banner'),
+    rngStatusBadge: document.getElementById('rng-status-badge'),
+    rngConfidencePct: document.getElementById('rng-confidence-pct'),
+    rngConfidenceBar: document.getElementById('rng-confidence-bar'),
+    rngNoteText: document.getElementById('rng-note-text'),
+    rngSidebarIndicator: document.getElementById('rng-sidebar-indicator'),
+    rngSidebarVal: document.getElementById('rng-sidebar-val'),
+    rngSidebarBar: document.getElementById('rng-sidebar-bar'),
+    rngRoundsVal: document.getElementById('rng-rounds-val')
 };
 
 function init() {
@@ -189,6 +204,10 @@ function setupEventListeners() {
     });
 
     elements.exportLogsBtn.addEventListener('click', exportSessionCSV);
+
+    // --- RNG Mode Toggles ---
+    elements.rngModeOff.addEventListener('click', () => setRNGMode(false));
+    elements.rngModeOn.addEventListener('click', () => setRNGMode(true));
 }
 
 // Persistence Methods
@@ -213,6 +232,15 @@ function loadFromStorage() {
             }
             if (state.splitActive) {
                 elements.hand2.classList.remove('hidden');
+            }
+            // Restore RNG Mode UI if it was active
+            if (state.rngMode) {
+                elements.rngModeOff.classList.remove('active');
+                elements.rngModeOn.classList.add('active');
+                elements.rngModeOn.classList.add('rng-active');
+                elements.rngWarningBanner.classList.remove('hidden');
+                elements.rngSidebarIndicator.classList.remove('hidden');
+                // updateRNGIndicator() will be called via refreshUI() in init()
             }
         } catch (e) {
             console.error("Failed to load state", e);
@@ -318,6 +346,10 @@ function executeSplit() {
 
 function recordOutcome(type) {
     state.stats[type]++;
+    // Track rounds for RNG confidence building
+    if (state.rngMode) {
+        state.rngRoundsTracked++;
+    }
     // Log the round for export
     state.history.push({
         timestamp: new Date().toLocaleTimeString(),
@@ -473,11 +505,62 @@ function updateDealerBustHUD(tc) {
 }
 
 function updateBettingAdvice(tc, aceDiff) {
-    // Basic Edge: -0.5% (House Edge)
-    // Hi-Lo Edge: +0.5% per True Count point
-    // Ace Neutrality: +0.1% per Ace point
-    let edge = -0.5 + (tc * 0.5) + (aceDiff * 0.1);
-    
+    // Base edge calculation
+    // Hi-Lo Edge: +0.5% per True Count point, Ace factor: +0.1% per point
+    const rawEdge = -0.5 + (tc * 0.5) + (aceDiff * 0.1);
+
+    if (state.rngMode) {
+        // ─── RNG MODE: Confidence-adjusted betting ───
+        const confidence = calculateRNGConfidence(); // 0-100
+        const confidenceFactor = confidence / 100;  // 0.0 to 1.0
+
+        // Edge is scaled by confidence: low confidence → base house edge only
+        const adjustedEdge = -0.5 + ((tc * 0.5) + (aceDiff * 0.1)) * confidenceFactor;
+
+        // Bet: only go above 1x unit if confidence is > 50% AND edge is positive
+        const kellyFactor = state.kellyMode === '1/2' ? 0.5 : 1.0;
+        let multiplier = 1;
+        if (confidence >= 50 && adjustedEdge > 0) {
+            multiplier = Math.max(1, Math.floor(tc * kellyFactor * confidenceFactor * 2));
+        }
+        const recBet = state.unitSize * multiplier;
+
+        if (elements.betMultiplier) {
+            elements.betMultiplier.textContent = confidence < 50 ? `BASE BET` : `${multiplier}x Unit`;
+        }
+        if (elements.recBetVal) elements.recBetVal.textContent = `€${recBet}`;
+        if (elements.edgeVal) {
+            elements.edgeVal.textContent = `${adjustedEdge >= 0 ? '+' : ''}${adjustedEdge.toFixed(2)}%`;
+            elements.edgeVal.style.color = adjustedEdge > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+            // Dim edge if low confidence
+            elements.edgeVal.classList.toggle('edge-unreliable', confidence < 30);
+        }
+
+        // RoR uses adjusted edge
+        if (elements.rorVal) {
+            if (adjustedEdge <= 0) {
+                elements.rorVal.textContent = "100%";
+                elements.rorVal.style.color = "var(--risk-high)";
+            } else {
+                const ror = Math.exp(-2 * (adjustedEdge/100) * state.bankroll / (1.15 * Math.pow(state.unitSize, 2)));
+                const rorPercent = (ror * 100).toFixed(2);
+                elements.rorVal.textContent = `${rorPercent}%`;
+                elements.rorVal.style.color = rorPercent < 1 ? "var(--risk-low)" : rorPercent < 5 ? "var(--risk-med)" : "var(--risk-high)";
+            }
+        }
+        if (elements.minBankrollVal) {
+            const positiveEdge = Math.max(0.01, adjustedEdge) / 100;
+            const suggested = Math.ceil(-Math.log(0.05) * (1.15 * Math.pow(state.unitSize, 2)) / (2 * positiveEdge));
+            elements.minBankrollVal.textContent = `€${suggested.toLocaleString()}`;
+            elements.minBankrollVal.style.color = state.bankroll >= suggested ? "var(--accent-success)" : "var(--risk-med)";
+        }
+
+        updateRNGIndicator();
+        return;
+    }
+
+    // ─── NORMAL MODE: Standard Kelly betting ───
+    const edge = rawEdge;
     const kellyFactor = state.kellyMode === '1/2' ? 0.5 : 1.0;
     const multiplier = edge <= 0 ? 1 : Math.max(1, Math.floor(tc * kellyFactor * 2));
     const recBet = state.unitSize * multiplier;
@@ -487,11 +570,11 @@ function updateBettingAdvice(tc, aceDiff) {
     if (elements.edgeVal) {
         elements.edgeVal.textContent = `${edge >= 0 ? '+' : ''}${edge.toFixed(2)}%`;
         elements.edgeVal.style.color = edge > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+        elements.edgeVal.classList.remove('edge-unreliable');
     }
 
     // Risk of Ruin Approximation
-    // RoR = exp(-2 * Edge * Bankroll / (Variance * Unit^2))
-    // Variance per hand is approx 1.15
+    // RoR = exp(-2 * Edge * Bankroll / (Variance * Unit^2)),  Variance ≈ 1.15
     if (elements.rorVal) {
         if (edge <= 0) {
             elements.rorVal.textContent = "100%";
@@ -716,7 +799,8 @@ function refreshUI() {
     updateHUD(); 
     updateStatsUI(); 
     updateAdvice();
-    saveToStorage(); // New
+    updateRNGIndicator(); // Sync RNG confidence display
+    saveToStorage();
 }
 
 
@@ -732,8 +816,97 @@ function clearTable() {
 function resetShoe() {
     state.runningCount = 0; state.totalCardsDealt = 0;
     state.aceCount = 0;
+    // Reset RNG tracking on shoe reset (manual shuffle signal)
+    state.rngRoundsTracked = 0;
     state.history = []; state.tableHistory = [];
     clearTable();
+    updateRNGIndicator();
+}
+
+// =========================================================
+// RNG MODE FUNCTIONS
+// =========================================================
+
+/**
+ * Toggle RNG mode on or off.
+ * When ON: shows warning banner, resets confidence tracking.
+ * When OFF: hides all RNG UI, restores normal mode.
+ */
+function setRNGMode(active) {
+    state.rngMode = active;
+
+    // Update toggle button states
+    elements.rngModeOff.classList.toggle('active', !active);
+    elements.rngModeOn.classList.toggle('active', active);
+    elements.rngModeOn.classList.toggle('rng-active', active);
+
+    // Show/hide RNG UI elements
+    elements.rngWarningBanner.classList.toggle('hidden', !active);
+    elements.rngSidebarIndicator.classList.toggle('hidden', !active);
+
+    if (active) {
+        // Reset confidence when entering RNG mode for a new session
+        // (keep rngRoundsTracked if already set — user may toggle back and forth)
+        updateRNGIndicator();
+    } else {
+        // Restore clean edge display
+        if (elements.edgeVal) elements.edgeVal.classList.remove('edge-unreliable');
+    }
+
+    refreshUI();
+}
+
+/**
+ * Calculate the shoe confidence score (0–85%).
+ *
+ * Algorithm:
+ *  - Each completed round without a manual shoe reset → +7% (max 56%)
+ *  - Penetration > 30% → +10% bonus (shoe appears persistent)
+ *  - Penetration > 50% → +20% bonus (very likely persistent shoe)
+ *  - Hard cap at 85% — we can never be 100% certain on an RNG table.
+ */
+function calculateRNGConfidence() {
+    if (!state.rngMode) return 100;
+
+    const roundsBonus = Math.min(56, state.rngRoundsTracked * 7);
+
+    const penetration = (state.totalCardsDealt / (state.deckCount * 52)) * 100;
+    const penetrationBonus = penetration > 50 ? 20 : penetration > 30 ? 10 : 0;
+
+    return Math.min(85, roundsBonus + penetrationBonus);
+}
+
+/**
+ * Sync all RNG Mode UI elements to the current confidence level.
+ * Called after each betting advice update and on shoe reset.
+ */
+function updateRNGIndicator() {
+    if (!state.rngMode) return;
+
+    const confidence = calculateRNGConfidence();
+    const pct = `${confidence.toFixed(0)}%`;
+
+    // Update confidence bars
+    if (elements.rngConfidenceBar) elements.rngConfidenceBar.style.width = pct;
+    if (elements.rngConfidencePct) elements.rngConfidencePct.textContent = pct;
+    if (elements.rngSidebarBar) elements.rngSidebarBar.style.width = pct;
+    if (elements.rngSidebarVal) elements.rngSidebarVal.textContent = pct;
+    if (elements.rngRoundsVal) elements.rngRoundsVal.textContent = state.rngRoundsTracked;
+
+    // Update status badge & note text
+    const badge = elements.rngStatusBadge;
+    const note = elements.rngNoteText;
+
+    if (confidence < 30) {
+        if (badge) { badge.textContent = 'UNCERTAIN'; badge.className = 'rng-status-badge uncertain'; }
+        if (note) note.textContent = 'Shoe nicht verifiziert — Bet-Sizing basiert auf Base-Wahrscheinlichkeiten. Count wird beobachtet.';
+    } else if (confidence < 65) {
+        if (badge) { badge.textContent = 'BUILDING'; badge.className = 'rng-status-badge building'; }
+        if (note) note.textContent = `${state.rngRoundsTracked} Runden ohne Shuffle erkannt — Count wird partiell berücksichtigt. Bet-Sizing konservativ.`;
+    } else {
+        if (badge) { badge.textContent = 'STABLE'; badge.className = 'rng-status-badge stable'; }
+        if (note) note.textContent = `Shoe erscheint persistent (${state.rngRoundsTracked} Runden). Count wird mit ${confidence.toFixed(0)}% Gewichtung verwendet.`;
+    }
 }
 
 function resetStats() {
